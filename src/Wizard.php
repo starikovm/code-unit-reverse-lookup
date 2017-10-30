@@ -43,10 +43,39 @@ class Wizard
         }
 
         if (isset($this->lookupTable[$filename][$lineNumber])) {
-            return $this->lookupTable[$filename][$lineNumber];
-        } else {
-            return $filename . ':' . $lineNumber;
+            /** @var \ReflectionFunctionAbstract $functionOrMethod */
+            $functionOrMethod = $this->lookupTable[$filename][$lineNumber];
+
+            $name = $functionOrMethod->getName();
+            if ($functionOrMethod instanceof \ReflectionMethod) {
+                return $functionOrMethod->getDeclaringClass()->getName() . '::' . $name;
+            }
+
+            return $name;
         }
+
+        return $filename . ':' . $lineNumber;
+    }
+
+    /**
+     * @param $filename
+     * @return null|string
+     */
+    public function lookupClass($filename)
+    {
+        if (!isset($this->processedClasses[$filename])) {
+            $this->updateLookupTable();
+        }
+
+        /** @var \ReflectionFunctionAbstract[] $functions */
+        $functions = $this->lookupTable[$filename];
+        $functionOrMethod = reset($functions);
+
+        if ($functionOrMethod instanceof \ReflectionMethod) {
+            return $functionOrMethod->getDeclaringClass()->getName();
+        }
+
+        return null;
     }
 
     private function updateLookupTable()
@@ -94,18 +123,12 @@ class Wizard
             return;
         }
 
-        $name = $functionOrMethod->getName();
-
-        if ($functionOrMethod instanceof \ReflectionMethod) {
-            $name = $functionOrMethod->getDeclaringClass()->getName() . '::' . $name;
-        }
-
         if (!isset($this->lookupTable[$functionOrMethod->getFileName()])) {
             $this->lookupTable[$functionOrMethod->getFileName()] = [];
         }
 
         foreach (range($functionOrMethod->getStartLine(), $functionOrMethod->getEndLine()) as $line) {
-            $this->lookupTable[$functionOrMethod->getFileName()][$line] = $name;
+            $this->lookupTable[$functionOrMethod->getFileName()][$line] = $functionOrMethod;
         }
     }
 }
