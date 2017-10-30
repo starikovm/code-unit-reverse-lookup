@@ -59,7 +59,7 @@ class Wizard
 
     /**
      * @param $filename
-     * @return null|string
+     * @return string
      */
     public function lookupClass($filename)
     {
@@ -75,7 +75,7 @@ class Wizard
             return $functionOrMethod->getDeclaringClass()->getName();
         }
 
-        return null;
+        return $filename;
     }
 
     private function updateLookupTable()
